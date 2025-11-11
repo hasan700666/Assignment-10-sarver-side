@@ -3,7 +3,9 @@ const app = express();
 const port = 3000;
 var cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const e = require("express");
 
+// Pick the json data from client
 app.use(express.json());
 
 // Middleware
@@ -46,7 +48,15 @@ async function run() {
 
     //read (all)
     app.get("/foodCollection", async (req, res) => {
-      const corsor = foodCollection.find({});
+      const email = req.query.email;
+      console.log(email);
+      const query = {};
+
+      if (email) {
+        query.userEmail = email;
+      }
+
+      const corsor = foodCollection.find(query).sort({ date: -1 });
       const all = await corsor.toArray();
       res.send(all);
     });
@@ -57,16 +67,17 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const body = req.body;
       const update = {
-        $set: {
-          foodName: body.foodName,
-          foodImage: body.foodImage,
-          restaurantName: body.restaurantName,
-          location: body.location,
-          starRating: body.starRating,
-          reviewText: body.reviewText,
-          userEmail: body.userEmail,
-          date: body.date,
-        },
+        // $set: {
+        //   foodName: body.foodName,
+        //   foodImage: body.foodImage,
+        //   restaurantName: body.restaurantName,
+        //   location: body.location,
+        //   starRating: body.starRating,
+        //   reviewText: body.reviewText,
+        //   userEmail: body.userEmail,
+        //   date: body.date,
+        // }
+        $set: body,
       };
       const options = {};
       const result = foodCollection.updateOne(query, update, options);

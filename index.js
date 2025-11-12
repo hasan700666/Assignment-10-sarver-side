@@ -62,25 +62,65 @@ const verifyTokan = async (req, res, next) => {
 async function run() {
   try {
     const myDB = client.db("FoodLover");
-    const foodCollection = myDB.collection("foodsCollection");
+    const publicFoodCollection = myDB.collection("publicFoodCollection");
+    const privateFoodCollection = myDB.collection("privateFoodCollection");
 
     //create
-    app.post("/foodCollection", async (req, res) => {
+    app.post("/publicFoodCollection", async (req, res) => {
+      //ok
       const New = req.body;
-      const result = await foodCollection.insertOne(New);
+      //console.log("hasan", New);
+
+      const result = await publicFoodCollection.insertOne(New);
       res.send(result);
     });
 
+    //send to privet with email
+    //get
+    app.get("/privateFoodCollection", verifyTokan, async (req, res) => {
+      //ok
+      const email = req.query.email;
+      const decode = req.decodeEmail;
+
+      if (email == decode) {
+        const query = {};
+        query.userEmail = email;
+
+        const sorsor = privateFoodCollection.find(query);
+
+        const result = await sorsor.toArray();
+        res.send(result);
+      }
+
+      res.status(404).send({
+        message: "error email",
+      });
+    });
+
+    //post
+    app.post("/privateFoodCollection", async (req, res) => {
+      //ok
+      const New = req.body;
+
+      const result = await privateFoodCollection.insertOne(New);
+      res.send(result);
+    });
+
+    //
+
     //read (one)
-    app.get("/foodCollection/:id", verifyTokan, async (req, res) => {
+    app.get("/publicFoodCollection/:id", async (req, res) => {
+      //ok
       const id = req.params.id;
       const qurry = { _id: new ObjectId(id) };
-      const result = await foodCollection.findOne(qurry);
+      const result = await publicFoodCollection.findOne(qurry);
       res.send(result);
     });
 
     //read (all)
-    app.get("/foodCollection", async (req, res) => {
+    app.get("/publicFoodCollection", async (req, res) => {
+      //ok
+
       const email = req.query.email;
       //console.log(email);
       const query = {};
@@ -89,16 +129,58 @@ async function run() {
         query.userEmail = email;
       }
 
-      const corsor = foodCollection.find(query).sort({ date: -1 });
+      const corsor = publicFoodCollection.find(query).sort({ date: -1 });
       const all = await corsor.toArray();
       res.send(all);
     });
 
+    //for my reviews
+    // app.get("/publicFoodCollection", async (req, res) => {
+    //   //running
+
+    //   const email = req.query.email;
+    //   //console.log(email);
+    //   const query = {};
+
+    //   if (email) {
+    //     query.userEmail = email;
+    //   }
+
+    //   const corsor = publicFoodCollection.find(query).sort({ date: -1 });
+    //   const all = await corsor.toArray();
+    //   res.send(all);
+    // });
+
+    //for home
+    app.get("/publicFoodCollectionHome", async (req, res) => {
+      //ok
+      const corsor = publicFoodCollection.find({}).sort({ date: -1 }).limit(6);
+      const all = await corsor.toArray();
+      res.send(all);
+    });
+
+    //privet
+
+    //get
+    app.get("/privateFoodCollection/:id", async (req, res) => {
+      //ok
+      const id = req.params.id;
+      const qurry = { _id: new ObjectId(id) };
+      const result = await privateFoodCollection.findOne(qurry);
+      res.send(result);
+    });
+
     //update
-    app.patch("/foodCollection/:id", async (req, res) => {
+    app.patch("/privateFoodCollection/:id", async (req, res) => {
+      //ok
+
+      console.log("hello");
+      //
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const body = req.body;
+      console.log(body);
+
       const update = {
         // $set: {
         //   foodName: body.foodName,
@@ -113,17 +195,24 @@ async function run() {
         $set: body,
       };
       const options = {};
-      const result = foodCollection.updateOne(query, update, options);
+      const result = await privateFoodCollection.updateOne(
+        query,
+        update,
+        options
+      );
       res.send(result);
     });
 
     //delete
-    app.delete("/foodCollection/:id", verifyTokan, async (req, res) => {
+    app.delete("/privateFoodCollection/:id", async (req, res) => {
+      //ok
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await foodCollection.deleteOne(query);
+      const result = await privateFoodCollection.deleteOne(query);
       res.send(result);
     });
+
+    //
 
     //favoriteCollection
 
@@ -131,6 +220,7 @@ async function run() {
 
     //gat
     app.get("/favoriteCollection", verifyTokan, async (req, res) => {
+      //ok
       const FromDecodeEmail = req.decodeEmail;
       //console.log("from",FromDecodeEmail);
 
@@ -179,7 +269,7 @@ async function run() {
 
     //search function
     //get
-    app.get("/searchFoodCollection", async (req, res) => {
+    app.get("/searchpublicFoodCollection", async (req, res) => {
       const search = req.query.search;
       console.log("search query:", search);
       let query = {};
@@ -187,7 +277,7 @@ async function run() {
         query = { foodName: { $regex: search, $options: "i" } };
       }
 
-      const corsor = foodCollection.find(query);
+      const corsor = publicFoodCollection.find(query);
       const Data = await corsor.toArray();
       res.send(Data);
     });

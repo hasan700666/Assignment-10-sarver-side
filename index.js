@@ -116,21 +116,19 @@ async function run() {
     //post
     app.post("/favoriteCollection", async (req, res) => {
       const NewData = req.body;
-      console.log(NewData);
+      //console.log(NewData);
       const alreadyEx = await favoriteCollection.findOne({
         foodId: NewData.foodId,
         userEmail: NewData.userEmail,
       });
-      if(alreadyEx){
-        res.send({message:"message already exsit"})
-      }
-      else{
-const result = await favoriteCollection.insertOne(NewData);
-      //console.log(result);
+      if (alreadyEx) {
+        res.send({ message: "message already exsit" });
+      } else {
+        const result = await favoriteCollection.insertOne(NewData);
+        //console.log(result);
 
-      res.send(result);
+        res.send(result);
       }
-      
     });
 
     //delete
@@ -139,6 +137,21 @@ const result = await favoriteCollection.insertOne(NewData);
       const query = { _id: new ObjectId(id) };
       const result = await favoriteCollection.deleteOne(query);
       res.send(result);
+    });
+
+    //search function
+    //get
+    app.get("/searchFoodCollection", async (req, res) => {
+      const search = req.query.search;
+      console.log("search query:", search);
+      let query = {};
+      if (search) {
+        query = { foodName: { $regex: search, $options: "i" } };
+      }
+
+      const corsor = foodCollection.find(query);
+      const Data = await corsor.toArray();
+      res.send(Data);
     });
 
     // Connect the client to the server	(optional starting in v4.7)

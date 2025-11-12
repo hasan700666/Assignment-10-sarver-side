@@ -26,6 +26,39 @@ const client = new MongoClient(uri, {
   },
 });
 
+//firebase admin
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./firebaseAdminKye.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+//midialware
+const verifyTokan = async (req, res, next) => {
+  const autorization = req.headers.authorization;
+
+  if (!autorization) {
+    return res.status(401).send({
+      message: "unauthrorized token",
+    });
+  }
+
+  const token = autorization.split(" ")[1];
+
+  try {
+    const decode = await admin.auth().verifyIdToken(token);
+    console.log("decode", decode.email);
+    req.decodeEmail = decode.email;
+    next();
+  } catch (error) {
+    res.status(401).send({
+      message: "unauthrorized token",
+    });
+  }
+};
+
 async function run() {
   try {
     const myDB = client.db("FoodLover");
@@ -39,7 +72,7 @@ async function run() {
     });
 
     //read (one)
-    app.get("/foodCollection/:id", async (req, res) => {
+    app.get("/foodCollection/:id", verifyTokan, async (req, res) => {
       const id = req.params.id;
       const qurry = { _id: new ObjectId(id) };
       const result = await foodCollection.findOne(qurry);
@@ -49,7 +82,7 @@ async function run() {
     //read (all)
     app.get("/foodCollection", async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+      //console.log(email);
       const query = {};
 
       if (email) {
@@ -85,7 +118,7 @@ async function run() {
     });
 
     //delete
-    app.delete("/foodCollection/:id", async (req, res) => {
+    app.delete("/foodCollection/:id", verifyTokan, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await foodCollection.deleteOne(query);
@@ -97,20 +130,25 @@ async function run() {
     const favoriteCollection = myDB.collection("favoriteCollection");
 
     //gat
-    app.get("/favoriteCollection", async (req, res) => {
+    app.get("/favoriteCollection", verifyTokan, async (req, res) => {
+      const FromDecodeEmail = req.decodeEmail;
+      //console.log("from",FromDecodeEmail);
+
       const email = req.query.email;
       //console.log(email);
       const query = {};
 
-      if (email) {
+      if (email == FromDecodeEmail) {
         query.userEmail = email;
+        const corsor = favoriteCollection.find(query);
+        const allData = await corsor.toArray();
+        console.log(allData);
+        res.send(allData);
+      } else {
+        res.status(404).send({
+          message: "no email on path or unauthroriz access",
+        });
       }
-
-      const corsor = favoriteCollection.find(query);
-      const allData = await corsor.toArray();
-      console.log(allData);
-
-      res.send(allData);
     });
 
     //post

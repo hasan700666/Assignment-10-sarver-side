@@ -65,10 +65,14 @@ async function run() {
     const publicFoodCollection = myDB.collection("publicFoodCollection"); //public
     const privateFoodCollection = myDB.collection("privateFoodCollection"); //privet
     const favoriteCollection = myDB.collection("favoriteCollection"); //favorite
+    const topFoodBloggers = myDB.collection("topFoodBloggers"); //foodBloggers
 
     //home --> react start  id = 1
     app.get("/publicFoodCollectionHome", async (req, res) => {
-      const corsor = publicFoodCollection.find({}).sort({ date: -1 }).limit(6);
+      const corsor = publicFoodCollection
+        .find({})
+        .sort({ starRating: -1 })
+        .limit(6);
       const all = await corsor.toArray();
       res.send(all);
     });
@@ -297,13 +301,20 @@ async function run() {
       if (search) {
         query = { foodName: { $regex: search, $options: "i" } };
       }
-      
+
       const corsor = publicFoodCollection.find(query);
       const Data = await corsor.toArray();
       res.send(Data);
     });
 
     //search function --> react end
+
+    //top food bloggers data
+    app.get("/topFoodBloggers", async (req, res) => {
+      const carsor = topFoodBloggers.find({});
+      const allData = await carsor.toArray();
+      res.send(allData);
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();

@@ -283,7 +283,7 @@ async function run() {
     //(favoriteCollection) update --> react end
 
     //food details --> react start id = 16
-    app.get("/publicFoodCollection/:id", verifyTokan, async (req, res) => {
+    app.get("/publicFoodCollection/:id", async (req, res) => {
       const id = req.params.id;
       const qurry = { _id: new ObjectId(id) };
       const result = await publicFoodCollection.findOne(qurry);
